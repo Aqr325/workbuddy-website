@@ -1,0 +1,28 @@
+{
+  "id": ".",
+  "name": "个人工作台 · WorkBuddy Desk",
+  "short_name": "工作台",
+  "description": "任务、日程、便签、链接收藏、人脉与专注计时，本地优先的个人工作台。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6fb",
+  "theme_color": "#4f46e5",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "今日概览", "url": ".?view=dashboard", "description": "一眼掌握今日待办与安排" },
+    { "name": "任务管理", "url": ".?view=tasks", "description": "查看与添加任务" },
+    { "name": "日程安排", "url": ".?view=calendar", "description": "查看日历与提醒" }
+  ]
+}
