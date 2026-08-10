@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="工作台" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="description" content="个人工作台：任务管理、日程安排、便签记录、常用链接收藏、专注计时，数据本地持久化。" />
+  <title>个人工作台</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <!-- 登录 / 注册 覆盖层 -->
+  <div class="auth-screen" id="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-logo">WB</div>
+        <div>
+          <div class="auth-title">个人工作台</div>
+          <div class="auth-sub">WorkBuddy Desk</div>
+        </div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login" type="button">登录</button>
+        <button class="auth-tab" data-mode="register" type="button">注册</button>
+      </div>
+      <form id="auth-form" autocomplete="off">
+        <label class="field"><span>用户名</span>
+          <input class="input" id="auth-username" type="text" placeholder="登录用户名" maxlength="30" required />
+        </label>
+        <label class="field" id="auth-name-field" hidden><span>显示名称</span>
+          <input class="input" id="auth-name" type="text" placeholder="默认与用户名相同" maxlength="30" />
+        </label>
+        <label class="field"><span>密码</span>
+          <input class="input" id="auth-password" type="password" placeholder="至少 4 位，建议含字母与数字" maxlength="60" required />
+        </label>
+        <div class="pwd-strength" id="auth-pwd-strength" hidden>
+          <i></i><i></i><i></i><i></i>
+          <em id="auth-pwd-text"></em>
+        </div>
+        <label class="field" id="auth-avatar-field" hidden><span>头像 emoji（可选）</span>
+          <input class="input" id="auth-avatar" type="text" placeholder="🙂" maxlength="4" />
+        </label>
+        <p class="auth-error" id="auth-error" hidden></p>
+        <button class="btn btn-primary auth-submit" id="auth-submit" type="submit">登录</button>
+      </form>
+      <details class="auth-advanced">
+        <summary>服务器设置（多端同步需一致）</summary>
+        <label class="field"><span>服务器地址</span>
+          <input class="input" id="auth-server" type="text" placeholder="http://127.0.0.1:7700" maxlength="200" spellcheck="false" />
+        </label>
+        <p class="auth-server-hint">手机/其他电脑打开本页时，填写同一台后端地址即可共享同一账号数据。留空默认本机 7700。</p>
+      </details>
+      <p class="auth-hint" id="auth-hint">首次使用？切换到「注册」创建账号。</p>
+    </div>
+  </div>
+
+  <div class="app hidden" id="app-root">
+    <!-- 侧边栏（桌面端） -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">WB</div>
+        <div class="brand-text">
+          <span class="brand-title">个人工作台</span>
+          <span class="brand-sub">WorkBuddy Desk</span>
+        </div>
+      </div>
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-ico">◧</span>概览</button>
+        <button class="nav-item" data-view="tasks"><span class="nav-ico">✔</span>任务管理</button>
+        <button class="nav-item" data-view="calendar"><span class="nav-ico">▦</span>日程安排</button>
+        <button class="nav-item" data-view="relations"><span class="nav-ico">☺</span>社会关系</button>
+        <button class="nav-item" data-view="notes"><span class="nav-ico">✎</span>便签记录</button>
+        <button class="nav-item" data-view="links"><span class="nav-ico">⚷</span>链接收藏</button>
+        <button class="nav-item" data-view="projects"><span class="nav-ico">▣</span>项目管理</button>
+        <button class="nav-item" data-view="emails"><span class="nav-ico">✉</span>邮件模板</button>
+        <button class="nav-item" data-view="interviews"><span class="nav-ico">❒</span>访谈话书</button>
+        <button class="nav-item" data-view="deploys"><span class="nav-ico">▶</span>部署面板</button>
+        <button class="nav-item" data-view="prompts"><span class="nav-ico">✦</span>提示词</button>
+      </nav>
+      <div class="side-footer">
+        <span id="clock">--:--</span>
+        <span id="today-label">--</span>
+      </div>
+    </aside>
+
+    <!-- 主区域 -->
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-title">
+          <h1 id="view-title">概览</h1>
+          <p id="view-desc">一眼掌握今日待办、安排与人脉。</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="user-chip" id="btn-profile" title="个人资料 / 退出登录">
+            <span class="user-avatar" id="user-avatar">🙂</span>
+            <span class="user-name" id="user-name">用户</span>
+          </button>
+          <button class="btn btn-ghost" id="btn-help" title="快捷键帮助 (?)">❓</button>
+          <button class="btn btn-ghost" id="btn-theme" title="切换主题 (T)">🌓</button>
+          <button class="btn btn-ghost" id="btn-about" title="关于 / 版本 / 检查更新">ℹ️</button>
+          <button class="btn btn-ghost btn-install" id="btn-install" hidden title="安装到桌面 / 手机主屏">⬇ 安装</button>
+        </div>
+      </header>
+
+      <!-- 概览仪表盘 -->
+      <section class="view active" id="view-dashboard">
+        <div class="stat-grid" id="stat-grid"></div>
+
+        <div class="card today-card">
+          <div class="day-head"><h3>今日要处理</h3></div>
+          <ul class="mini-list" id="dash-today"></ul>
+          <p class="empty sm" id="dash-today-empty" hidden>今天没有待处理事项，轻松一下。</p>
+        </div>
+
+        <div class="dash-cols">
+          <div class="card">
+            <div class="day-head"><h3>今日安排</h3><button class="btn btn-ghost" data-view="calendar">去日程 ›</button></div>
+            <ul class="mini-list" id="dash-events"></ul>
+            <p class="empty sm" id="dash-events-empty" hidden>今天还没有安排。</p>
+          </div>
+          <div class="card">
+            <div class="day-head"><h3>待办优先</h3><button class="btn btn-ghost" data-view="tasks">去任务 ›</button></div>
+            <ul class="mini-list" id="dash-tasks"></ul>
+            <p class="empty sm" id="dash-tasks-empty" hidden>暂无待办，轻松一下。</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="day-head"><h3>生日提醒</h3><button class="btn btn-ghost" data-view="relations">去人脉 ›</button></div>
+          <ul class="mini-list" id="dash-birthdays"></ul>
+          <p class="empty sm" id="dash-birthdays-empty" hidden>近 30 天没有生日。</p>
+        </div>
+
+        <div class="card">
+          <div class="day-head">
+            <h3>本周概览</h3>
+            <button class="btn btn-ghost" id="dash-focus-open">打开计时 ›</button>
+          </div>
+          <div class="dash-week">
+            <div class="focus-mini">
+              <span class="fm-num" id="dash-focus-num">0</span>
+              <span class="fm-label">今日专注</span>
+            </div>
+            <div class="chart-wrap">
+              <svg id="dash-chart" class="dash-chart" viewBox="0 0 280 92" preserveAspectRatio="none" aria-label="近7日完成任务趋势"></svg>
+            </div>
+          </div>
+          <p class="muted" style="margin-top:10px">柱状图为近 7 天完成（勾选）的任务数量。</p>
+        </div>
+
+        <div class="card">
+          <div class="day-head"><h3>快捷链接</h3><button class="btn btn-ghost" data-view="links">去收藏 ›</button></div>
+          <div class="quick-links" id="dash-links"></div>
+          <p class="empty sm" id="dash-links-empty" hidden>还没有收藏的链接。</p>
+        </div>
+
+        <div class="card">
+          <div class="day-head"><h3>近期项目</h3><button class="btn btn-ghost" data-view="projects">去项目 ›</button></div>
+          <ul class="mini-list" id="dash-projects"></ul>
+          <p class="empty sm" id="dash-projects-empty" hidden>还没有记录的项目。</p>
+        </div>
+
+        <div class="card">
+          <div class="day-head"><h3>数据管理</h3></div>
+          <div class="data-tools">
+            <button class="btn btn-ghost" id="btn-export">⬇ 导出备份</button>
+            <button class="btn btn-ghost" id="btn-import">⬆ 导入备份</button>
+            <button class="btn btn-ghost" id="btn-restore-idb">♻ 从本地保险箱恢复</button>
+            <button class="btn btn-ghost" id="btn-vault-backup">🔒 同步到守护进程保险箱</button>
+            <button class="btn btn-ghost" id="btn-vault-restore">♻ 从守护进程保险箱恢复</button>
+            <button class="btn btn-ghost danger-text" id="btn-clear">清空全部数据</button>
+            <input type="file" id="import-file" accept="application/json,.json" hidden />
+          </div>
+          <p class="muted" style="margin-top:10px">导出会将全部任务/日程/便签/链接/联系人/专注记录保存为 JSON 文件；导入将覆盖当前数据。本地保险箱（IndexedDB）与守护进程保险箱提供双重灾备，即使「清除浏览数据」也可恢复。</p>
+        </div>
+      </section>
+
+      <!-- 任务管理 -->
+      <section class="view" id="view-tasks">
+        <div class="card">
+          <form class="task-form" id="task-form" autocomplete="off">
+            <input class="input task-input" id="task-title" type="text" placeholder="添加一项新任务，回车保存…" maxlength="120" />
+            <input class="input task-date" id="task-due" type="date" />
+            <select class="input task-prio" id="task-prio">
+              <option value="low">低</option>
+              <option value="mid" selected>中</option>
+              <option value="high">高</option>
+            </select>
+            <input class="input task-tags" id="task-tags" type="text" placeholder="标签，逗号分隔" />
+            <button class="btn btn-primary" type="submit">添加</button>
+          </form>
+          <div class="filter-bar">
+            <div class="seg" id="task-filter">
+              <button class="seg-btn active" data-filter="all">全部</button>
+              <button class="seg-btn" data-filter="active">进行中</button>
+              <button class="seg-btn" data-filter="done">已完成</button>
+            </div>
+            <input class="input search" id="task-search" type="search" placeholder="搜索任务…" />
+            <span class="muted stat" id="task-stat"></span>
+          </div>
+          <div class="tag-filter" id="task-tags-filter"></div>
+          <ul class="task-list" id="task-list"></ul>
+          <p class="empty" id="task-empty" hidden>暂无任务，添加你的第一项吧。</p>
+        </div>
+      </section>
+
+      <!-- 日程安排 -->
+      <section class="view" id="view-calendar">
+        <div class="card">
+          <div class="cal-head">
+            <div class="cal-nav">
+              <button class="btn btn-ghost" id="cal-prev">‹</button>
+              <span class="cal-month" id="cal-month">--</span>
+              <button class="btn btn-ghost" id="cal-next">›</button>
+            </div>
+            <button class="btn btn-primary" id="cal-today">今天</button>
+          </div>
+          <div class="cal-weekdays">
+            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+        <div class="card">
+          <div class="day-head">
+            <h3 id="day-title">选择日期</h3>
+            <button class="btn btn-primary" id="ev-add">+ 添加事件</button>
+          </div>
+          <ul class="event-list" id="event-list"></ul>
+          <p class="empty" id="event-empty" hidden>这一天还没有安排。</p>
+        </div>
+        <div class="card" id="reminder-center">
+          <div class="day-head">
+            <h3>邮件提醒中心</h3>
+            <div class="rem-actions">
+              <button class="btn btn-ghost btn-sm" id="rem-settings-btn">提醒设置</button>
+              <button class="btn btn-primary btn-sm" id="rem-check-btn">立即检查</button>
+            </div>
+          </div>
+          <div class="rem-summary" id="rem-summary"></div>
+          <p class="empty rem-daemon-banner" id="rem-daemon-banner" hidden>已接入<strong>本地自动发送服务</strong>，到期提醒由后台守护进程<strong>自动、无需人工干预</strong>地真实投递（浏览器关闭也在运行）。手动「立即发送真实提醒」仍可用。</p>
+          <ul class="event-list" id="rem-list"></ul>
+          <p class="empty" id="rem-empty" hidden>暂无到期提醒。开启日程的「邮件提醒」并配置接收邮箱（提醒设置）后，到点会自动发出真实提醒；也可在日程弹窗点「立即发送真实提醒」手动发送。提醒按日期分组，点击日期可折叠。</p>
+        </div>
+      </section>
+
+      <!-- 社会关系 -->
+      <section class="view" id="view-relations">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="rel-search" type="search" placeholder="搜索姓名 / 单位 / 备注…" />
+          <select class="input rel-group-filter" id="rel-group-filter">
+            <option value="all">全部关系</option>
+            <option value="家人">家人</option>
+            <option value="亲戚">亲戚</option>
+            <option value="同事">同事</option>
+            <option value="客户">客户</option>
+            <option value="朋友">朋友</option>
+            <option value="同学">同学</option>
+            <option value="其他">其他</option>
+          </select>
+          <select class="input rel-group-filter" id="rel-industry-filter">
+            <option value="all">全部行业</option>
+            <option value="未分类">未分类</option>
+            <option value="供应商">供应商</option>
+            <option value="服务商">服务商</option>
+          </select>
+          <button class="btn btn-primary" id="rel-add">+ 新增联系人</button>
+        </div>
+        <div class="rel-grid" id="rel-grid"></div>
+        <p class="empty" id="rel-empty" hidden>还没有联系人，点击「新增联系人」建立你的人脉档案。</p>
+      </section>
+
+      <!-- 便签记录 -->
+      <section class="view" id="view-notes">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="note-search" type="search" placeholder="搜索便签…" />
+          <button class="btn btn-primary" id="note-add">+ 新建便签</button>
+        </div>
+        <div class="notes-grid" id="notes-grid"></div>
+        <p class="empty" id="notes-empty" hidden>还没有便签，点击「新建便签」记录灵感。</p>
+      </section>
+
+      <!-- 项目管理 -->
+      <section class="view" id="view-projects">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="proj-search" type="search" placeholder="搜索项目名 / 备注 / 技术栈…" />
+          <select class="input proj-status-filter" id="proj-status-filter">
+            <option value="all">全部状态</option>
+            <option value="planning">规划中</option>
+            <option value="active">进行中</option>
+            <option value="done">已完成</option>
+            <option value="paused">搁置</option>
+          </select>
+          <button class="btn btn-primary" id="proj-add">+ 新建项目</button>
+        </div>
+        <div class="proj-stats" id="proj-stats"></div>
+        <div class="proj-grid" id="proj-grid"></div>
+        <p class="empty" id="proj-empty" hidden>还没有项目，点击「新建项目」记录你的本地工程目录。</p>
+      </section>
+
+      <!-- 邮件模板库 -->
+      <section class="view" id="view-emails">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="email-search" type="search" placeholder="搜索邮件模板…" />
+          <select class="input email-cat-filter" id="email-cat-filter">
+            <option value="all">全部分类</option>
+          </select>
+          <button class="btn btn-primary" id="email-add">+ 新建模板</button>
+        </div>
+        <div class="notes-grid" id="email-grid"></div>
+        <p class="empty" id="email-empty" hidden>还没有邮件模板，点击「新建模板」沉淀常用的那几封。</p>
+      </section>
+
+      <!-- 访谈话书库 -->
+      <section class="view" id="view-interviews">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="interview-search" type="search" placeholder="搜索标题 / 话题 / 内容…" />
+          <div class="seg" id="interview-type-filter">
+            <button class="seg-btn active" data-type="all">全部</button>
+            <button class="seg-btn" data-type="提纲">提纲</button>
+            <button class="seg-btn" data-type="记录">记录</button>
+            <button class="seg-btn" data-type="话术">话术</button>
+          </div>
+          <button class="btn btn-primary" id="interview-add">+ 新增条目</button>
+        </div>
+        <div class="tag-filter" id="interview-tags-filter"></div>
+        <div class="notes-grid" id="interview-grid"></div>
+        <p class="empty" id="interview-empty" hidden>还没有访谈资料，点击「新增条目」整理提纲与话术。</p>
+      </section>
+
+      <!-- 服务部署快捷面板 -->
+      <section class="view" id="view-deploys">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="deploy-search" type="search" placeholder="搜索服务名 / 主机…" />
+          <button class="btn btn-primary" id="deploy-add">+ 添加服务</button>
+        </div>
+        <div class="notes-grid" id="deploy-grid"></div>
+        <p class="empty" id="deploy-empty" hidden>还没有服务，点击「添加服务」配置部署地址。</p>
+      </section>
+
+      <!-- 提示词仓库 -->
+      <section class="view" id="view-prompts">
+        <div class="notes-toolbar">
+          <input class="input search wide" id="prompt-search" type="search" placeholder="搜索提示词…" />
+          <button class="btn btn-primary" id="prompt-add">+ 新建提示词</button>
+        </div>
+        <div class="tag-filter" id="prompt-tags-filter"></div>
+        <div class="notes-grid" id="prompt-grid"></div>
+        <p class="empty" id="prompt-empty" hidden>还没有提示词，点击「新建提示词」保存好用的那几句。</p>
+      </section>
+
+      <!-- 链接收藏 -->
+      <section class="view" id="view-links">
+        <div class="card">
+          <form class="link-form" id="link-form" autocomplete="off">
+            <input class="input" id="link-name" type="text" placeholder="名称，如：邮箱" maxlength="40" />
+            <input class="input" id="link-url" type="url" placeholder="https://…" required />
+            <input class="input link-ico" id="link-icon" type="text" placeholder="图标 emoji（可选）" maxlength="4" />
+            <button class="btn btn-primary" type="submit" id="link-submit">收藏</button>
+            <button class="btn btn-ghost" type="button" id="link-cancel" hidden>取消</button>
+          </form>
+        </div>
+        <div class="notes-toolbar">
+          <input class="input search wide" id="link-search" type="search" placeholder="搜索链接…" />
+        </div>
+        <div class="links-grid" id="links-grid"></div>
+        <p class="empty" id="links-empty" hidden>还没有收藏的链接。</p>
+      </section>
+    </main>
+
+    <!-- 底部导航（移动端） -->
+    <nav class="mobile-nav">
+      <button class="m-nav-item active" data-view="dashboard"><span>◧</span>概览</button>
+      <button class="m-nav-item" data-view="tasks"><span>✔</span>任务</button>
+      <button class="m-nav-item" data-view="calendar"><span>▦</span>日程</button>
+      <button class="m-nav-item" data-view="relations"><span>☺</span>人脉</button>
+      <button class="m-nav-item" data-view="notes"><span>✎</span>便签</button>
+      <button class="m-nav-item" data-view="links"><span>⚷</span>链接</button>
+      <button class="m-nav-item" data-view="projects"><span>▣</span>项目</button>
+      <button class="m-nav-item" data-view="emails"><span>✉</span>邮件</button>
+      <button class="m-nav-item" data-view="interviews"><span>❒</span>访谈</button>
+      <button class="m-nav-item" data-view="deploys"><span>▶</span>部署</button>
+      <button class="m-nav-item" data-view="prompts"><span>✦</span>提示词</button>
+    </nav>
+  </div>
+
+  <!-- 事件弹窗（新增/编辑共用） -->
+  <div class="modal" id="event-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="ev-modal-title">添加事件</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="event-form" autocomplete="off">
+        <label class="field"><span>日期</span><input class="input" id="ev-date" type="date" required /></label>
+        <label class="field"><span>时间</span><input class="input" id="ev-time" type="time" required /></label>
+        <label class="field"><span>标题</span><input class="input" id="ev-title" type="text" placeholder="事件标题" maxlength="80" required /></label>
+        <label class="field"><span>重复</span>
+          <select class="input" id="ev-repeat">
+            <option value="none">不重复</option>
+            <option value="daily">每天</option>
+            <option value="weekly">每周</option>
+            <option value="monthly">每月</option>
+          </select>
+        </label>
+        <label class="field"><span>地点</span><input class="input" id="ev-location" type="text" placeholder="如：腾讯会议 / 3楼会议室" maxlength="80" /></label>
+        <label class="field"><span>备注</span><textarea class="input" id="ev-note" rows="2" placeholder="补充信息（将随提醒邮件发送）" maxlength="200"></textarea></label>
+        <div class="remind-block">
+          <label class="check"><input type="checkbox" id="ev-email-remind" /> 启用邮件提醒</label>
+          <div class="remind-row">
+            <select class="input" id="ev-lead">
+              <option value="5">提前 5 分钟</option>
+              <option value="15">提前 15 分钟</option>
+              <option value="30" selected>提前 30 分钟</option>
+              <option value="60">提前 1 小时</option>
+              <option value="120">提前 2 小时</option>
+              <option value="1440">提前 1 天</option>
+            </select>
+            <input class="input" id="ev-email-to" type="text" placeholder="接收邮箱（多个用逗号分隔，留空用全局）" maxlength="300" />
+          </div>
+          <div class="remind-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="ev-send-now">立即发送真实提醒</button>
+            <span class="muted small">支持多个接收人；留空则用全局默认邮箱。到点自动发送，也可手动立即发送。</span>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="ev-remind" checked /> 开启到点提醒</label>
+        <div class="notif-row" id="ev-notif-row" hidden>
+          <span class="muted">想接收桌面通知？需授权浏览器通知权限。</span>
+          <button type="button" class="btn btn-ghost" id="ev-notif-btn">开启桌面通知</button>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="ev-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 邮件提醒设置弹窗 -->
+  <div class="modal" id="reminder-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>邮件提醒设置</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="reminder-form" autocomplete="off">
+        <label class="field"><span>默认接收邮箱</span><input class="input" id="rem-email" type="text" placeholder="如 a@x.com, b@y.com（多个用逗号分隔）" maxlength="300" /></label>
+        <label class="field"><span>发送方式</span>
+          <select class="input" id="rem-mode">
+            <option value="mailto">邮件客户端（mailto: 自动调起）</option>
+            <option value="api">网关 API（POST 推送）</option>
+          </select>
+        </label>
+        <label class="field" id="rem-api-row"><span>网关 API 地址</span><input class="input" id="rem-api" type="url" placeholder="https://your-gateway/send" /></label>
+        <label class="check"><input type="checkbox" id="rem-auto" checked /> 到点自动调起邮件客户端（mailto 模式）</label>
+        <p class="muted small">纯前端无法真正直发邮件。mailto 模式会调起你的邮件客户端预填内容（支持多个接收人）；API 模式会把提醒 POST 到你自己的网关（自行实现发信）。</p>
+
+        <div class="remind-block daemon-block">
+          <div class="remind-row" style="align-items:center">
+            <strong style="font-size:14px">自动发送服务（端到端无人值守）</strong>
+            <span id="rem-daemon-status" class="pill grey" style="margin-left:auto">未连接</span>
+          </div>
+          <p class="muted small">后台运行 <code>reminder-server/server.js</code> 守护进程后，此处填入地址与令牌，即可让系统<strong>自动、无需人工干预</strong>地按提前量真实发信（浏览器关掉也在发）。SMTP / 发信网关在 <code>config.json</code> 中配置。</p>
+          <label class="field"><span>服务地址</span><input class="input" id="rem-daemon-url" type="text" placeholder="http://127.0.0.1:7700" maxlength="200" /></label>
+          <label class="field"><span>访问令牌</span><input class="input" id="rem-daemon-token" type="text" placeholder="与 config.json 的 daemonToken 一致" maxlength="120" /></label>
+          <label class="check"><input type="checkbox" id="rem-daemon-sync" /> 启用自动同步（事件增删改时实时推送到服务）</label>
+          <div class="remind-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="rem-test">连接测试</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="rem-sync-now">立即全量同步</button>
+            <span class="muted small">测试会向服务发送一次健康检查并探测连通性。</span>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 联系人弹窗（新增/编辑共用） -->
+  <div class="modal" id="contact-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="rel-modal-title">新增联系人</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="contact-form" autocomplete="off">
+        <label class="field"><span>姓名</span><input class="input" id="rel-name" type="text" placeholder="如：张总" maxlength="40" required /></label>
+        <label class="field"><span>关系分类</span>
+          <input class="input" id="rel-group" type="text" list="rel-groups" placeholder="客户 / 同事 / 家人…" maxlength="20" />
+          <datalist id="rel-groups">
+            <option value="家人"></option><option value="亲戚"></option><option value="同事"></option>
+            <option value="客户"></option><option value="朋友"></option><option value="同学"></option><option value="其他"></option>
+            <option value="老板"></option><option value="CEO"></option><option value="创始人"></option><option value="高管"></option>
+            <option value="总监"></option><option value="经理"></option><option value="销售"></option><option value="卖家"></option>
+            <option value="采购"></option><option value="商务"></option><option value="运营"></option><option value="产品"></option>
+            <option value="技术"></option><option value="研发"></option><option value="工程师"></option><option value="市场"></option>
+            <option value="法务"></option><option value="财务"></option><option value="投资人"></option><option value="合伙人"></option>
+            <option value="合作伙伴"></option><option value="客服"></option><option value="猎头"></option><option value="媒体"></option>
+          </datalist>
+        </label>
+        <label class="field"><span>行业分类</span>
+          <select class="input" id="rel-industry">
+            <option value="未分类">未分类</option>
+            <option value="供应商">供应商</option>
+            <option value="服务商">服务商</option>
+          </select>
+        </label>
+        <div class="rel-two">
+          <label class="field"><span>电话</span><input class="input" id="rel-phone" type="tel" placeholder="138…" maxlength="30" /></label>
+          <label class="field"><span>邮箱</span><input class="input" id="rel-email" type="email" placeholder="name@x.com" maxlength="60" /></label>
+        </div>
+        <div class="rel-two">
+          <label class="field"><span>单位 / 组织</span><input class="input" id="rel-org" type="text" placeholder="公司 / 学校" maxlength="60" /></label>
+          <label class="field"><span>生日</span><input class="input" id="rel-birthday" type="date" /></label>
+        </div>
+        <div class="rel-two">
+          <label class="field"><span>头像 emoji（可选）</span><input class="input" id="rel-icon" type="text" placeholder="🙂" maxlength="4" /></label>
+          <label class="field"><span>自定义关系色</span><input class="input" id="rel-color" type="color" value="#4f46e5" /></label>
+        </div>
+        <label class="field"><span>备注</span><textarea class="input rel-note-input" id="rel-note" placeholder="认识渠道、近期跟进、偏好…" maxlength="300"></textarea></label>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="rel-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 项目弹窗（新增/编辑共用） -->
+  <div class="modal" id="project-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="proj-modal-title">新建项目</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="project-form" autocomplete="off">
+        <label class="field"><span>项目名称</span><input class="input" id="proj-name" type="text" placeholder="如：客户演示站" maxlength="60" required /></label>
+        <label class="field"><span>本地文件夹路径</span><input class="input" id="proj-path" type="text" placeholder="如：D:\Projects\demo 或 /Users/me/demo" maxlength="260" required /></label>
+        <p class="muted" style="margin-top:-6px;margin-bottom:10px">填写项目在本机上的真实路径，之后可一键在资源管理器中定位。可到资源管理器地址栏或 Shift+右键「复制文件地址」获取。</p>
+        <label class="field"><span>状态</span>
+          <select class="input" id="proj-status">
+            <option value="planning">规划中</option>
+            <option value="active" selected>进行中</option>
+            <option value="done">已完成</option>
+            <option value="paused">搁置</option>
+          </select>
+        </label>
+        <div class="rel-two">
+          <label class="field"><span>自定义颜色</span><input class="input" id="proj-color" type="color" value="#4f46e5" /></label>
+          <label class="field"><span>技术栈 / 标签</span><input class="input" id="proj-stack" type="text" placeholder="如：Vue / Python" maxlength="60" /></label>
+        </div>
+        <label class="field"><span>备注</span><textarea class="input rel-note-input" id="proj-note" placeholder="项目说明、关键路径、负责人…" maxlength="300"></textarea></label>
+        <div class="proj-todo-block">
+          <div class="proj-todo-head"><span>项目待办事项</span><span class="badge-count" id="proj-todo-count">0</span></div>
+          <div class="proj-todo-add">
+            <input class="input" id="proj-todo-input" type="text" placeholder="添加待办，回车确认…" maxlength="120" />
+            <button class="btn btn-ghost btn-sm" type="button" id="proj-todo-add">添加</button>
+          </div>
+          <ul class="proj-todo-list" id="proj-todo-list"></ul>
+          <p class="empty sm" id="proj-todo-empty" hidden>暂无待办，添加后可在卡片上跟踪进度。</p>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="proj-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 邮件模板弹窗 -->
+  <div class="modal" id="email-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="email-modal-title">新建邮件模板</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="email-form" autocomplete="off">
+        <label class="field"><span>模板名称</span><input class="input" id="email-name" type="text" placeholder="如：周报同步" maxlength="40" required /></label>
+        <label class="field"><span>分类</span><input class="input" id="email-category" type="text" list="email-cats" placeholder="如：客户 / 内部 / 招聘" maxlength="20" />
+          <datalist id="email-cats"></datalist></label>
+        <label class="field"><span>邮件主题</span><input class="input" id="email-subject" type="text" placeholder="主题行" maxlength="120" /></label>
+        <label class="field"><span>正文（用 {{变量名}} 作为占位符）</span><textarea class="input rel-note-input" id="email-body" placeholder="您好 {{姓名}}，关于 {{事项}}…" maxlength="4000"></textarea></label>
+        <label class="field"><span>变量（逗号分隔，如：姓名,事项）</span><input class="input" id="email-vars" type="text" placeholder="姓名,事项" maxlength="120" /></label>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="email-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 访谈弹窗 -->
+  <div class="modal" id="interview-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box" style="width:min(92vw,440px)">
+      <div class="modal-head">
+        <h3 id="interview-modal-title">新增访谈条目</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="interview-form" autocomplete="off">
+        <label class="field"><span>标题</span><input class="input" id="interview-title" type="text" placeholder="如：产品负责人访谈提纲" maxlength="80" required /></label>
+        <div class="rel-two">
+          <label class="field"><span>类型</span>
+            <select class="input" id="interview-type"><option value="提纲">提纲</option><option value="记录">记录</option><option value="话术">话术</option></select>
+          </label>
+          <label class="field"><span>话题 / 对象</span><input class="input" id="interview-topic" type="text" placeholder="如：张总 / 竞品分析" maxlength="40" /></label>
+        </div>
+        <div class="rel-two">
+          <label class="field"><span>标签</span><input class="input" id="interview-tags" type="text" placeholder="逗号分隔" maxlength="80" /></label>
+          <label class="field"><span>到期日</span><input class="input" id="interview-due" type="date" /></label>
+        </div>
+        <label class="field"><span>内容（提纲要点 / 记录 / 话术）</span><textarea class="input rel-note-input" id="interview-content" placeholder="逐条列出问题或话术…" maxlength="4000"></textarea></label>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="interview-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 部署弹窗 -->
+  <div class="modal" id="deploy-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box" style="width:min(92vw,440px)">
+      <div class="modal-head">
+        <h3 id="deploy-modal-title">添加服务</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="deploy-form" autocomplete="off">
+        <label class="field"><span>服务名称</span><input class="input" id="deploy-name" type="text" placeholder="如：官网前端" maxlength="40" required /></label>
+        <div class="rel-two">
+          <label class="field"><span>类型</span>
+            <select class="input" id="deploy-kind"><option value="web">Web 服务</option><option value="api">API 服务</option><option value="db">数据库</option><option value="worker">后台任务</option><option value="other">其他</option></select>
+          </label>
+          <label class="field"><span>主机</span><input class="input" id="deploy-host" type="text" placeholder="如：192.168.1.10 或 example.com" maxlength="120" /></label>
+        </div>
+        <div class="rel-two">
+          <label class="field"><span>端口</span><input class="input" id="deploy-port" type="text" placeholder="如：8080" maxlength="10" /></label>
+          <label class="field"><span>健康检查地址</span><input class="input" id="deploy-health" type="text" placeholder="https://host/healthz" maxlength="200" /></label>
+        </div>
+        <label class="field"><span>部署命令</span><textarea class="input rel-note-input" id="deploy-cmd" placeholder="如：kubectl apply -f deploy.yaml" maxlength="1000"></textarea></label>
+        <label class="field"><span>部署网关接口（可选，留空则只复制命令）</span><input class="input" id="deploy-api" type="text" placeholder="https://ci.example.com/hook" maxlength="200" /></label>
+        <label class="field"><span>备注</span><input class="input" id="deploy-notes" type="text" placeholder="环境 / 负责人 / 注意事项" maxlength="200" /></label>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="deploy-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 提示词弹窗 -->
+  <div class="modal" id="prompt-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box" style="width:min(92vw,440px)">
+      <div class="modal-head">
+        <h3 id="prompt-modal-title">新建提示词</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="prompt-form" autocomplete="off">
+        <label class="field"><span>标题</span><input class="input" id="prompt-title" type="text" placeholder="如：代码审查助手" maxlength="60" required /></label>
+        <div class="rel-two">
+          <label class="field"><span>分类</span><input class="input" id="prompt-category" type="text" placeholder="如：开发 / 写作" maxlength="20" /></label>
+          <label class="field"><span>标签</span><input class="input" id="prompt-tags" type="text" placeholder="逗号分隔" maxlength="80" /></label>
+        </div>
+        <label class="field"><span>提示词内容</span><textarea class="input rel-note-input" id="prompt-content" placeholder="粘贴或编写提示词…" maxlength="6000"></textarea></label>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="prompt-delete" hidden>删除</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 快捷键帮助弹窗 -->
+  <div class="modal" id="help-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>键盘快捷键</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <ul class="help-list">
+        <li><kbd>1</kbd>–<kbd>9</kbd><span>切换概览 / 任务 / 日程 / 人脉 / 便签 / 链接 / 项目 / 邮件 / 访谈</span></li>
+        <li><kbd>0</kbd><span>切换部署面板（提示词等更多视图点底部 / 侧栏导航）</span></li>
+        <li><kbd>T</kbd><span>切换深色 / 浅色主题</span></li>
+        <li><kbd>?</kbd><span>打开本帮助</span></li>
+        <li><kbd>Esc</kbd><span>关闭弹窗 / 计时面板</span></li>
+        <li><kbd>🍅</kbd><span>右下角按钮打开专注计时</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 个人资料弹窗 -->
+  <div class="modal" id="profile-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>个人资料</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <form id="profile-form" autocomplete="off">
+        <div class="profile-avatar-row">
+          <span class="profile-avatar" id="profile-avatar-preview">🙂</span>
+          <div style="flex:1; min-width:0;">
+            <label class="field"><span>显示名称</span><input class="input" id="pf-name" type="text" maxlength="30" required /></label>
+            <label class="field"><span>头像 emoji</span><input class="input" id="pf-avatar" type="text" maxlength="4" placeholder="🙂" /></label>
+          </div>
+        </div>
+        <label class="field"><span>简介</span><textarea class="input" id="pf-bio" maxlength="200" placeholder="一句话介绍自己…"></textarea></label>
+        <details class="pf-pwd">
+          <summary>修改密码</summary>
+          <label class="field"><span>当前密码</span><input class="input" id="pf-curpwd" type="password" maxlength="60" /></label>
+          <label class="field"><span>新密码</span><input class="input" id="pf-newpwd" type="password" maxlength="60" placeholder="至少 4 位" /></label>
+        </details>
+        <p class="auth-error" id="pf-error" hidden></p>
+        <div class="modal-foot">
+          <button class="btn btn-ghost danger-text" type="button" id="pf-logout">退出登录</button>
+          <span style="flex:1"></span>
+          <button class="btn btn-ghost" type="button" data-close>取消</button>
+          <button class="btn btn-primary" type="submit">保存</button>
+        </div>
+        <details class="pf-danger">
+          <summary>删除账号</summary>
+          <p class="muted">永久删除本账号及其全部数据（任务 / 日程 / 便签 / 链接 / 联系人 / 专注记录），操作不可恢复。</p>
+          <label class="field"><span>输入当前密码确认</span><input class="input" id="pf-delpwd" type="password" maxlength="60" placeholder="当前密码" /></label>
+          <button class="btn btn-primary" type="button" id="pf-delete-account" style="background:var(--danger)">删除账号</button>
+        </details>
+      </form>
+    </div>
+  </div>
+
+  <!-- 专注计时浮层 -->
+  <button class="focus-fab" id="focus-fab" title="专注计时">🍅</button>
+  <div class="focus-panel" id="focus-panel" hidden>
+    <div class="focus-head">
+      <span>专注计时</span>
+      <button class="btn btn-ghost" id="focus-close" title="关闭">✕</button>
+    </div>
+    <div class="focus-mode" id="focus-mode">专注</div>
+    <div class="focus-time" id="focus-time">25:00</div>
+    <div class="focus-prog"><div class="focus-prog-bar" id="focus-prog"></div></div>
+    <div class="focus-btns">
+      <button class="btn btn-primary" id="focus-toggle">开始</button>
+      <button class="btn btn-ghost" id="focus-reset">重置</button>
+      <button class="btn btn-ghost" id="focus-skip">跳过</button>
+    </div>
+    <div class="focus-stat" id="focus-stat">今日已完成 0 个专注</div>
+    <details class="focus-set">
+      <summary>时长设置</summary>
+      <label class="field"><span>专注（分钟）</span><input class="input" id="fs-work" type="number" min="1" max="120" value="25" /></label>
+      <label class="field"><span>短休（分钟）</span><input class="input" id="fs-short" type="number" min="1" max="60" value="5" /></label>
+      <label class="field"><span>长休（分钟）</span><input class="input" id="fs-long" type="number" min="1" max="60" value="15" /></label>
+      <label class="check"><input type="checkbox" id="fs-auto" checked /> 一段结束后自动开始下一段</label>
+    </details>
+  </div>
+
+  <!-- 关于 / 版本 / 检查更新 -->
+  <div class="modal" id="about-modal" hidden>
+    <div class="modal-mask" data-close></div>
+    <div class="modal-box" style="width:min(92vw,420px)">
+      <div class="modal-head">
+        <h3>关于 WorkBuddy</h3>
+        <button class="btn btn-ghost" data-close>✕</button>
+      </div>
+      <div class="about-body">
+        <div class="about-logo">WB</div>
+        <div class="about-name">个人工作台 · WorkBuddy Desk</div>
+        <div class="about-ver">
+          <span>当前版本</span>
+          <span class="about-ver-num" id="about-version">—</span>
+          <span class="pill" id="about-edition">—</span>
+        </div>
+
+        <div class="about-update">
+          <span class="pill" id="about-update-pill">检查中…</span>
+          <span class="about-update-msg" id="about-update-msg"></span>
+        </div>
+
+        <div class="about-progress" id="about-progress" hidden>
+          <div class="upd-bar"><div class="upd-bar-fill" id="about-progress-fill"></div></div>
+          <span class="about-progress-pct" id="about-progress-pct">0%</span>
+        </div>
+
+        <div class="about-actions">
+          <button class="btn btn-ghost" id="about-check" type="button">检查更新</button>
+          <button class="btn btn-primary" id="about-update-btn" type="button" hidden>下载并更新</button>
+          <button class="btn btn-primary" id="about-install-btn" type="button" hidden>立即更新并重启</button>
+        </div>
+
+        <p class="about-tip" id="about-tip"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-wrap"></div>
+
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/persist.js"></script>
+  <script src="assets/js/sync-engine.js"></script>
+  <script src="assets/js/sync-integration.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
