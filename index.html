@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WorkBuddy 工作台 — 本地优先的 productivity workbench</title>
+  <meta name="description" content="WorkBuddy 工作台把任务、日程、笔记、链接、人脉与本地项目收进一个本地优先的桌面应用。数据留在你自己的设备上，登录即可在手机与电脑间无缝同步。" />
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg" />
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png" />
+  <meta property="og:title" content="WorkBuddy 工作台" />
+  <meta property="og:description" content="本地优先的 productivity workbench —— 数据自主，多端同步，端侧 AI。" />
+  <meta property="og:image" content="assets/img/logo-512.png" />
+  <meta name="theme-color" content="#0b0f17" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <header class="nav" id="top">
+    <a class="brand" href="#top" aria-label="WorkBuddy 工作台 首页">
+      <img src="assets/img/logo.svg" alt="" width="30" height="30" />
+      <span class="brand-name">WorkBuddy<i>工作台</i></span>
+    </a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="#features">功能</a>
+      <a href="#why">为什么不同</a>
+      <a href="#download">下载</a>
+      <a href="#docs">文档</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-signal" href="#download">下载桌面版</a>
+    </div>
+    <button class="nav-toggle" id="navToggle" aria-label="菜单" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy reveal">
+          <span class="eyebrow mono">LOCAL-FIRST · 端侧优先</span>
+          <h1 class="display">把工作，<br />收进一个<span class="accent">工作台</span></h1>
+          <p class="lede">
+            WorkBuddy 工作台把任务、日程、笔记、链接、人脉与本地项目，
+            收进一个<strong>本地优先</strong>的桌面应用。数据留在你自己的设备上，
+            登录即可在手机与电脑间<strong>无缝同步</strong>。
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-signal" href="#download">下载 Windows 桌面版</a>
+            <a class="btn btn-ghost" href="#download">体验移动端 PWA</a>
+          </div>
+          <div class="specs mono">
+            <span>v1.1.1</span><i>·</i><span>Windows 10+</span><i>·</i><span>100% 本地运行</span>
+          </div>
+        </div>
+
+        <!-- INSTRUMENT PANEL MOCK -->
+        <div class="hero-visual reveal" aria-hidden="true">
+          <div class="panel">
+            <div class="panel-bar">
+              <span class="dots"><i></i><i></i><i></i></span>
+              <span class="panel-title mono">workbuddy — local</span>
+              <span class="panel-badge mono">SYNCED</span>
+            </div>
+            <div class="panel-body">
+              <aside class="panel-side">
+                <span class="side-item active">● 今日</span>
+                <span class="side-item">○ 日程</span>
+                <span class="side-item">○ 笔记</span>
+                <span class="side-item">○ 链接</span>
+                <span class="side-item">○ 人脉</span>
+                <span class="side-item">○ 项目</span>
+              </aside>
+              <div class="panel-main">
+                <div class="panel-eyebrow mono">TODAY · 3 项</div>
+                <div class="task">
+                  <span class="check done"></span>
+                  <span class="task-text">整理客户拜访纪要</span>
+                  <span class="prio high"></span>
+                </div>
+                <div class="task">
+                  <span class="check"></span>
+                  <span class="task-text">同步端侧 AI 模组资料</span>
+                  <span class="prio mid"></span>
+                </div>
+                <div class="task">
+                  <span class="check"></span>
+                  <span class="task-text">回复移远商务邮件</span>
+                  <span class="prio low"></span>
+                </div>
+                <div class="mini-cal">
+                  <div class="cal-head mono">AUG 2026</div>
+                  <div class="cal-grid">
+                    <span class="dim">一</span><span class="dim">二</span><span class="dim">三</span><span class="dim">四</span><span class="dim">五</span><span class="dim">六</span><span class="dim">日</span>
+                    <span>3</span><span>4</span><span>5</span><span class="today">6</span><span>7</span><span>8</span><span>9</span>
+                    <span>10</span><span class="dot">11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAT STRIP -->
+      <div class="stat-strip reveal">
+        <div class="stat">
+          <div class="stat-num">6</div>
+          <div class="stat-label mono">模块一体化</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">E2E</div>
+          <div class="stat-label mono">端到端加密</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">∞</div>
+          <div class="stat-label mono">多端实时同步</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">100%</div>
+          <div class="stat-label mono">本地优先</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features">
+      <div class="section-head reveal">
+        <span class="eyebrow mono">CAPABILITIES</span>
+        <h2 class="h2">一个工作台，<br />收下全部日常</h2>
+        <p class="section-sub">六个模块共享同一份本地数据，无需在十几个 App 之间来回切换。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="card feature reveal">
+          <div class="feat-glyph">✓</div>
+          <h3>任务与提醒</h3>
+          <p>优先级分色、到期标签、专注视图。提醒在本地准时弹出，不依赖云端。</p>
+        </article>
+        <article class="card feature reveal">
+          <div class="feat-glyph">◷</div>
+          <h3>日程日历</h3>
+          <p>月历与待办联动，今天要做什么一眼看清，重要的日子提前标亮。</p>
+        </article>
+        <article class="card feature reveal">
+          <div class="feat-glyph">⇄</div>
+          <h3>跨平台账号同步</h3>
+          <p>登录即全量同步，SSE 实时推送 + 定时兜底，断网期间的改动重连后自动归位。</p>
+        </article>
+        <article class="card feature reveal">
+          <div class="feat-glyph">⛨</div>
+          <h3>本地优先与隐私</h3>
+          <p>数据落在本机 userData，AES-256-GCM 加密。你的内容不上传、不绑架。</p>
+        </article>
+        <article class="card feature reveal">
+          <div class="feat-glyph">☍</div>
+          <h3>关系与链接</h3>
+          <p>人脉与常用链接归拢到一处，随手记录、一键直达，告别收藏夹吃灰。</p>
+        </article>
+        <article class="card feature reveal">
+          <div class="feat-glyph">▤</div>
+          <h3>本地项目</h3>
+          <p>每个项目记录它在磁盘上的真实文件夹，点一下就在文件管理器里打开。</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- WHY -->
+    <section class="section why" id="why">
+      <div class="why-grid">
+        <div class="why-left reveal">
+          <span class="eyebrow mono">WHY WORKBUDDY</span>
+          <h2 class="h2">不是又一个<br />云笔记</h2>
+          <p class="section-sub">大多数工具把你的数据存进它们的服务器，再用会员把你留住。WorkBuddy 反着来——先本地，后同步。</p>
+          <a class="btn btn-ghost" href="#download">看看怎么装</a>
+        </div>
+        <div class="why-right">
+          <div class="why-item reveal">
+            <span class="why-no mono">01</span>
+            <div>
+              <h3>数据自主</h3>
+              <p>所有内容存在你自己的设备上，加密落盘。换电脑、卸软件，数据带得走。</p>
+            </div>
+          </div>
+          <div class="why-item reveal">
+            <span class="why-no mono">02</span>
+            <div>
+              <h3>端侧 AI</h3>
+              <p>面向端侧 AI / IoT 场景设计，资料与上下文留在本地，推理更可控。</p>
+            </div>
+          </div>
+          <div class="why-item reveal">
+            <span class="why-no mono">03</span>
+            <div>
+              <h3>零配置同步</h3>
+              <p>登录即全量 + 实时，不用手动导出导入。多端永远是一份数据。</p>
+            </div>
+          </div>
+          <div class="why-item reveal">
+            <span class="why-no mono">04</span>
+            <div>
+              <h3>可安装多端</h3>
+              <p>Windows 桌面版 + 移动端 PWA，添加到主屏幕就能用，不进应用商店也行。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD -->
+    <section class="section download" id="download">
+      <div class="section-head reveal">
+        <span class="eyebrow mono">GET STARTED</span>
+        <h2 class="h2">装到你常用的那台设备</h2>
+      </div>
+      <div class="download-grid">
+        <article class="card dl-card reveal">
+          <div class="dl-ico">▦</div>
+          <h3>Windows 桌面版</h3>
+          <p class="dl-desc">原生 Electron 封装，本地运行后端与前端，体验最完整。</p>
+          <ul class="dl-spec mono">
+            <li>Windows 10 / 11</li>
+            <li>安装版 + 便携版</li>
+            <li>内置自动更新</li>
+          </ul>
+          <a class="btn btn-signal" href="https://github.com/Aqr325/workbuddy-releases/releases/download/v1.1.1/WorkBuddy-Desktop-Setup-1.1.1.exe" download>下载安装版</a>
+          <a class="btn btn-ghost" href="https://github.com/Aqr325/workbuddy-releases/releases/download/v1.1.1/WorkBuddy-Desktop-Portable-1.1.1.exe" download>便携版（免安装）</a>
+          <span class="dl-note mono">v1.1.1 · 约 70 MB · 自签名证书</span>
+        </article>
+        <article class="card dl-card reveal">
+          <div class="dl-ico">◳</div>
+          <h3>移动端 PWA</h3>
+          <p class="dl-desc">同一份可安装网页应用，手机浏览器打开后「添加到主屏幕」即可。</p>
+          <ul class="dl-spec mono">
+            <li>iOS Safari / Android Chrome</li>
+            <li>免安装、即开即用</li>
+            <li>与桌面端实时同步</li>
+          </ul>
+          <a class="btn btn-ghost" href="https://workbuddy-pwa-kjtbwhah.edgeone.cool?eo_token=ac6b29a59d4ebe26ceb0099702315590&eo_time=1786333467">打开移动端</a>
+          <span class="dl-note mono">需联网首次加载 · 添加到主屏幕</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- DOCS / CTA -->
+    <section class="section cta" id="docs">
+      <div class="cta-box reveal">
+        <div>
+          <span class="eyebrow mono">OPEN & LOCAL</span>
+          <h2 class="h2">数据是你的，<br />工具也该是。</h2>
+        </div>
+        <div class="cta-side">
+          <p>想了解同步协议、部署自己的后端，或参与项目？文档与源码都在仓库里。</p>
+          <a class="btn btn-primary" href="#top">回到顶部</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-top">
+      <a class="brand" href="#top">
+        <img src="assets/img/logo.svg" alt="" width="26" height="26" />
+        <span class="brand-name">WorkBuddy<i>工作台</i></span>
+      </a>
+      <nav class="footer-links" aria-label="页脚导航">
+        <a href="#features">功能</a>
+        <a href="#why">为什么不同</a>
+        <a href="#download">下载</a>
+        <a href="#docs">文档</a>
+      </nav>
+    </div>
+    <div class="footer-bottom mono">
+      <span>© 2026 WorkBuddy · 本地优先的 productivity workbench</span>
+      <span>build 1.1.1 · local-first</span>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
